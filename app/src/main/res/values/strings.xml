@@ -4,4 +4,7 @@
     <string name="edit_message">Enter a message</string>
     <string name="button_send">Send</string>
     <string name="title_activity_display_message">Display Message</string>
+    <string name="new_item">Item</string>
+    <string name="settingsCopyright">© 2016 Benjamin Schmid</string>
+    <string name="checklistEditButton">edit</string>
 </resources>

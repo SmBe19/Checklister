@@ -3,4 +3,7 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="checklistItemTextSize">20sp</dimen>
+    <dimen name="checklistItemPadding">8dp</dimen>
+    <dimen name="checklistItemEditPadding">8dp</dimen>
 </resources>
