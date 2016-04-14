@@ -11,6 +11,7 @@
         android:padding="@dimen/checklistItemPadding"
         android:layout_weight="1"
         android:id="@+id/checklistItem"
+        android:onClick="toggleChecked"
         android:text="Test"/>
 
     <EditText
@@ -29,5 +30,13 @@
         android:src="@android:drawable/ic_menu_edit"
         android:onClick="editCheckbox"
         />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/checklistChildsButton"
+        android:padding="@dimen/checklistItemChildsPadding"
+        android:src="@android:drawable/ic_menu_view"
+        android:onClick="viewChilds"/>
 
 </LinearLayout>

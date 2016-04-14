@@ -6,4 +6,5 @@
     <dimen name="checklistItemTextSize">20sp</dimen>
     <dimen name="checklistItemPadding">8dp</dimen>
     <dimen name="checklistItemEditPadding">8dp</dimen>
+    <dimen name="checklistItemChildsPadding">8dp</dimen>
 </resources>

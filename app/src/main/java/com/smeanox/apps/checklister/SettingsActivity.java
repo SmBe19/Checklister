@@ -1,6 +1,7 @@
 package com.smeanox.apps.checklister;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,6 +19,16 @@ public class SettingsActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_settings);
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
+	public void resetDb(View view) {
+		ChecklistDB.get().resetDb();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			finishAffinity();
+		} else {
+			finish();
+			System.exit(0);
+		}
+	}
 }

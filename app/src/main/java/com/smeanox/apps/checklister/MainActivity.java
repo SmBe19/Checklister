@@ -1,6 +1,7 @@
 package com.smeanox.apps.checklister;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -9,12 +10,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
+
+	private ChecklistDB.Entry currentRootEntry;
+	public static final String EXTRA_ROOT_ENTRY = "com.smeanox.apps.checklister.rootentry";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +35,23 @@ public class MainActivity extends AppCompatActivity {
 				addMenuItem(view.getRootView());
 			}
 		});
+
+		ChecklistDB.get().setContext(this);
+
+		Intent intent = getIntent();
+		Long rootId = intent.getLongExtra(EXTRA_ROOT_ENTRY, -1);
+		if(rootId == -1){
+			currentRootEntry = ChecklistDB.get().getRoot();
+		} else {
+			currentRootEntry = ChecklistDB.get().getEntry(rootId);
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		}
+
+		for(ChecklistDB.Entry entry : currentRootEntry.getChildren()){
+			addChecklistEntry(entry);
+		}
+
+		getSupportActionBar().setTitle(currentRootEntry.getText());
 	}
 
 	@Override
@@ -44,25 +66,44 @@ public class MainActivity extends AppCompatActivity {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
 
 		//noinspection SimplifiableIfStatement
-		if (id == R.id.action_settings) {
-			Intent intent = new Intent(this, SettingsActivity.class);
-			startActivity(intent);
-			return true;
+		switch (item.getItemId()){
+			case R.id.action_settings:
+				Intent intent = new Intent(this, SettingsActivity.class);
+				startActivity(intent);
+				return true;
+			case android.R.id.home:
+				onBackPressed();
 		}
 
 		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		if(oldEditCheckbox != null){
+			endEditCheckbox(oldEditCheckbox);
+		}
+	}
+
 	public void addMenuItem(View view) {
+		addChecklistEntry(ChecklistDB.get().addEntry(currentRootEntry.getId(), getResources().getString(R.string.new_item), false));
+	}
+
+	public void addChecklistEntry(ChecklistDB.Entry entry){
 		LayoutInflater layoutInflater = getLayoutInflater();
 		LinearLayout checkBox = (LinearLayout) layoutInflater.inflate(R.layout.checklist_item, null);
-		((CheckBox) checkBox.findViewById(R.id.checklistItem)).setText(R.string.new_item);
+		((CheckBox) checkBox.findViewById(R.id.checklistItem)).setText(entry.getText());
+		((CheckBox) checkBox.findViewById(R.id.checklistItem)).setChecked(entry.isChecked());
+
 
 		LinearLayout layout = (LinearLayout) findViewById(R.id.mainLayout);
 		layout.addView(checkBox);
+
+		checkBox.setTag(R.integer.CheckboxEntryTag, entry);
 	}
 
 	private View oldEditCheckbox;
@@ -79,17 +120,40 @@ public class MainActivity extends AppCompatActivity {
 		startEditCheckbox(parent);
 	}
 
-	private void startEditCheckbox(View view) {
-		((EditText) view.findViewById(R.id.checklistEdit)).setText(((TextView) view.findViewById(R.id.checklistItem)).getText());
-		view.findViewById(R.id.checklistItem).setVisibility(View.GONE);
-		view.findViewById(R.id.checklistEdit).setVisibility(View.VISIBLE);
-		oldEditCheckbox = view;
+	private void startEditCheckbox(View parent) {
+		EditText editText = (EditText) parent.findViewById(R.id.checklistEdit);
+		CheckBox textView = (CheckBox) parent.findViewById(R.id.checklistItem);
+		editText.setText(textView.getText());
+		textView.setVisibility(View.GONE);
+		editText.setVisibility(View.VISIBLE);
+		oldEditCheckbox = parent;
+
+		editText.requestFocus();
+		InputMethodManager mgr = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+		mgr.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
 	}
 
-	private void endEditCheckbox(View view){
-		((TextView) view.findViewById(R.id.checklistItem)).setText(((EditText) view.findViewById(R.id.checklistEdit)).getText().toString());
-		view.findViewById(R.id.checklistItem).setVisibility(View.VISIBLE);
-		view.findViewById(R.id.checklistEdit).setVisibility(View.GONE);
+	private void endEditCheckbox(View parent){
+		String text = ((EditText) parent.findViewById(R.id.checklistEdit)).getText().toString();
+		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
+		entry.setText(text);
+		((TextView) parent.findViewById(R.id.checklistItem)).setText(text);
+		parent.findViewById(R.id.checklistItem).setVisibility(View.VISIBLE);
+		parent.findViewById(R.id.checklistEdit).setVisibility(View.GONE);
 		oldEditCheckbox = null;
+	}
+
+	public void viewChilds(View view) {
+		View parent = (View) view.getParent();
+		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
+		Intent intent = new Intent(this, MainActivity.class);
+		intent.putExtra(EXTRA_ROOT_ENTRY, entry.getId());
+		startActivity(intent);
+	}
+
+	public void toggleChecked(View view) {
+		View parent = (View) view.getParent();
+		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
+		entry.setChecked(((CheckBox) parent.findViewById(R.id.checklistItem)).isChecked());
 	}
 }
