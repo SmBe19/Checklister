@@ -9,4 +9,8 @@
     <string name="checklistEditButton">edit</string>
     <string name="checklistChildsButton">childs</string>
     <string name="SettingsResetButton">Reset</string>
+    <string name="ResetDialogTitle">Reset</string>
+    <string name="ResetDialogMessage">Do you really want to reset the database?</string>
+    <string name="ResetDialogPositive">Yes, I do.</string>
+    <string name="ResetDialogNegative">Nope!!!</string>
 </resources>
