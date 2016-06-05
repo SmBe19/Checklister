@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 			float startX=0, startY=0;
 			boolean reachedMin;
 			final float minWidth = 0.1f;
-			final float delWidth = 0.5f;
+			final float delWidth = 0.8f;
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {

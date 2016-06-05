@@ -191,8 +191,9 @@ public class ChecklistDB {
 			String[] selectionArgs = {
 				String.valueOf(id)
 			};
+			String orderBy = ChecklistEntry.COLUMN_NAME_CHECKED + " ASC, " + ChecklistEntry._ID + " ASC";
 
-			Cursor c = db.query(ChecklistEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, null);
+			Cursor c = db.query(ChecklistEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, orderBy);
 			c.moveToFirst();
 			if(c.getCount() > 0) {
 				do {
