@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,6 +15,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -95,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
 
 	public void addChecklistEntry(ChecklistDB.Entry entry){
 		LayoutInflater layoutInflater = getLayoutInflater();
-		LinearLayout checkBox = (LinearLayout) layoutInflater.inflate(R.layout.checklist_item, null);
+		RelativeLayout checkBox = (RelativeLayout) layoutInflater.inflate(R.layout.checklist_item, null);
 		((CheckBox) checkBox.findViewById(R.id.checklistItem)).setText(entry.getText());
 		((CheckBox) checkBox.findViewById(R.id.checklistItem)).setChecked(entry.isChecked());
 
@@ -103,13 +105,68 @@ public class MainActivity extends AppCompatActivity {
 		LinearLayout layout = (LinearLayout) findViewById(R.id.mainLayout);
 		layout.addView(checkBox);
 
+		checkBox.findViewById(R.id.checklistItem).setOnTouchListener(new View.OnTouchListener() {
+			float startX=0, startY=0;
+			boolean reachedMin;
+			final float minWidth = 0.1f;
+			final float delWidth = 0.5f;
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				float distX = event.getRawX() - startX;
+				if (distX > v.getWidth() * minWidth) {
+					reachedMin = true;
+				}
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN:
+						reachedMin = false;
+						startX = event.getRawX();
+						startY = event.getRawY();
+						return false;
+					case MotionEvent.ACTION_UP:
+						if(reachedMin) {
+							if (distX > v.getWidth() * delWidth) {
+								deleteEntry(v);
+							}
+							setOffsetX(v, 0);
+							return true;
+						}
+						break;
+					case MotionEvent.ACTION_MOVE:
+						if(reachedMin) {
+							if (distX >= 0) {
+								setOffsetX(v, (int) distX);
+							} else {
+								startX = event.getRawX();
+							}
+							return false;
+						}
+						break;
+				}
+				return false;
+			}
+
+			private void setOffsetX(View v, int distX){
+				RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) ((LinearLayout) v.getParent()).getLayoutParams();
+				layoutParams.leftMargin = distX;
+				layoutParams.rightMargin = -distX;
+				((LinearLayout) v.getParent()).setLayoutParams(layoutParams);
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					((View) v.getParent()).setAlpha(1 - Math.min(1, distX / (v.getWidth() * delWidth)));
+				}
+			}
+		});
+
+		RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) checkBox.findViewById(R.id.checklistWrapper).getLayoutParams();
+		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+
 		checkBox.setTag(R.integer.CheckboxEntryTag, entry);
 	}
 
 	private View oldEditCheckbox;
 
 	public void editCheckbox(View view) {
-		View parent = (View) view.getParent();
+		View parent = (View) view.getParent().getParent();
 		if(oldEditCheckbox == parent){
 			endEditCheckbox(parent);
 			return;
@@ -144,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public void viewChilds(View view) {
-		View parent = (View) view.getParent();
+		View parent = (View) view.getParent().getParent();
 		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
 		Intent intent = new Intent(this, MainActivity.class);
 		intent.putExtra(EXTRA_ROOT_ENTRY, entry.getId());
@@ -152,8 +209,15 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public void toggleChecked(View view) {
-		View parent = (View) view.getParent();
+		View parent = (View) view.getParent().getParent();
 		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
 		entry.setChecked(((CheckBox) parent.findViewById(R.id.checklistItem)).isChecked());
+	}
+
+	public void deleteEntry(View view){
+		View parent = (View) view.getParent().getParent();
+		ChecklistDB.Entry entry = (ChecklistDB.Entry) parent.getTag(R.integer.CheckboxEntryTag);
+		entry.delete();
+		((LinearLayout) parent.getParent()).removeView(parent);
 	}
 }
